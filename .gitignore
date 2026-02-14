@@ -1,6 +1,11 @@
-# Ignore virtual environment directories
-venv/
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
 
-
-# Ignore environment variable files
+# Environment variables
 .env
+.env.*
+
+# OS
+.DS_Store
