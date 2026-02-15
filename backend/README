@@ -1,0 +1,139 @@
+I have two backends: Supabase for data storage and authentication | fastAPI for external paper search
+
+fastAPI backend:
+
+POST /api/search-papers
+- sends at HTTP request to arXiv
+- parses the XML response
+- converts the XML response to JSON 
+- returns an object
+
+{
+  "data": [
+    {
+      "paperId": "2401.12345",
+      "title": "...",
+      "abstract": "...",
+      "authors": [
+        { "name": "Author 1" }
+      ],
+      "year": 2024,
+      "externalIds": {
+        "ArXiv": "2401.12345"
+      }
+    }
+  ]
+}
+
+Frontend Communication:
+
+When the user hits enter or search in the Explore tab, the frontend then calls POST http://localhost:8000/api/search-papers
+The frontend sends {query : string} and recieves a parsed JSON object and displays the results that match the querry.
+
+When the user then hits "save" paper the frontend then begins to communicate with Supabase. The paper is then inserted into 'papers' and 'saved_papers'. 
+
+When the user hits 'remove' then the paper is deleted from the 'saved_papers' table
+
+How to Run the Backend:
+FastAPI setup: 
+pip install fastapi uvicorn httpx
+Run Locally: uvicorn main:app --reload --port 8000
+
+Supabase setup:
+Create new project in Supabase
+create tables: "papers" | "saved_papers"
+Add foreign key saved_papers.paper_id → papers.id
+
+Authentication:
+Handled by Supabase Authentication
+- users log in
+- Supabase returns JWT
+- Supabase client attaches JWT automatically
+- Database enforces access via RLS
+
+Secrets:
+- Supabase Public Anon Key and Supabase URL in .env file
+- arXiv api key is not needed, fastAPI backend calls it
+
+
+
+
+PROMPT_LOG:
+
+I used chatGPT to help ask questions about SUPABASE setup and Github Copilot to work directly on the code
+
+- walk me through setting up a supabase project for an AI Research Explorer that allows users to type key words in a search bar, be given a full list of 
+research papers regarding thir prompt, the option to save the paper, and then view the paper in their library.
+
+- You are a senior frontend engineer.
+
+I am building an AI research platform using:
+
+- React (Vite)
+- React Router v6
+- TailwindCSS v4
+- Supabase (auth client already configured and exported as `supabase` in supabaseClient.js)
+
+Current structure:
+
+src/
+  pages/
+    Home.jsx
+    Landing.jsx
+    Library.jsx
+    Login.jsx
+    Signup.jsx
+  App.jsx
+  main.jsx
+  supabaseClient.js
+  index.css
+
+I want you to build a complete, production-ready frontend architecture with:
+
+1. Public landing page
+2. Authentication (login + signup using Supabase email/password)
+3. Protected routes for authenticated users
+4. Dashboard-style Home page after login
+5. Library page for viewing saved research items
+6. Persistent Navbar (only visible when authenticated)
+7. Logout functionality
+8. Loading states and error handling
+9. Proper redirect after login/signup
+10. Prevent UI flicker during session check on page refresh
+
+Requirements:
+- Use React functional components only
+- Use React Router v6 patterns (Routes, Route, Navigate, Outlet)
+- Create a ProtectedRoute component
+- Use a centralized auth state pattern (AuthContext or equivalent)
+- Listen to supabase.auth.onAuthStateChange
+- Clean up auth listener on unmount
+- Handle async session loading before rendering protected routes
+- Redirect unauthenticated users to /login
+- Keep code modular and production-ready
+- No unnecessary libraries
+- Use clean, modern Tailwind styling
+- Avoid overengineering
+
+Generate:
+
+- Updated App.jsx
+- AuthProvider / AuthContext implementation
+- ProtectedRoute.jsx
+- Navbar.jsx
+- Full Login.jsx
+- Full Signup.jsx
+- Example Landing.jsx
+- Example Home.jsx dashboard layout
+- Example Library.jsx layout
+
+Explain where each file should go.
+
+- use fastAPI to handle the arXiv api
+
+- when i save the paper it does not appear in my library, explain why this issue may be occurring? is it a problem with the code or the supabase setup?
+
+
+
+
+
