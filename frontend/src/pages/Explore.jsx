@@ -174,6 +174,17 @@ export default function Explore() {
           </p>
         </div>
 
+        {/* Render cold start warning for Render.com */}
+        {results.length === 0 && !loading && (
+          <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+            <p className="text-yellow-300 text-sm">
+              <strong>Note:</strong> Due to Render's free tier cold start, it
+              may take up to 30 seconds for the first search result to appear.
+              After that, results will load instantly.
+            </p>
+          </div>
+        )}
+
         {/* Search Bar */}
         <form onSubmit={searchPapers} className="mb-8">
           <div className="flex gap-2">
