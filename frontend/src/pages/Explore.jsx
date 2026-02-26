@@ -34,47 +34,6 @@ export default function Explore() {
     loadSavedPapers();
   }, [user]);
 
-  const searchPapers = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setLoading(true);
-    setError("");
-    setResults([]);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/search-papers`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ query: searchQuery }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.detail || errorData.error || "Failed to search papers",
-        );
-      }
-
-      const data = await response.json();
-      setResults(data.data || []);
-
-      if ((data.data || []).length === 0) {
-        setError("No papers found. Try a different search.");
-      }
-    } catch (err) {
-      setError(err.message || "Failed to search papers. Please try again.");
-      console.error("Search error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const savePaper = async (paper) => {
     if (!user) return;
 
@@ -146,6 +105,32 @@ export default function Explore() {
     }
   };
 
+  const savePapersToSupabase = async (papers) => {
+    for (const paper of papers) {
+      const paperId =
+        paper.paperId || paper.title.toLowerCase().replace(/\s+/g, "-");
+      // Check if paper already exists
+      const { data: existingPaper } = await supabase
+        .from("papers")
+        .select("id")
+        .eq("id", paperId)
+        .single();
+      if (!existingPaper) {
+        const paperData = {
+          id: paperId,
+          title: paper.title || "Untitled",
+          abstract: paper.abstract || "",
+          authors: paper.authors?.map((a) => a.name).join(", ") || "",
+          url: paper.externalIds?.ArXiv
+            ? `https://arxiv.org/abs/${paper.externalIds.ArXiv}`
+            : `https://arxiv.org/search/?query=${paperId}`,
+          year: paper.year || null,
+        };
+        await supabase.from("papers").insert([paperData]);
+      }
+    }
+  };
+
   const getAuthors = (paper) => {
     if (!paper.authors || paper.authors.length === 0) return "Unknown authors";
     return (
@@ -159,6 +144,52 @@ export default function Explore() {
 
   const getPaperId = (paper) =>
     paper.paperId || paper.title.toLowerCase().replace(/\s+/g, "-");
+
+  // Search papers by query and save results to Supabase if not already present
+  const searchPapers = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    setError("");
+    setResults([]);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/search-papers`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: searchQuery }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail || errorData.error || "Failed to search papers"
+        );
+      }
+
+      const data = await response.json();
+      setResults(data.data || []);
+      // Save all results to Supabase papers table if not already present
+      if (data.data && data.data.length > 0) {
+        await savePapersToSupabase(data.data);
+      }
+
+      if ((data.data || []).length === 0) {
+        setError("No papers found. Try a different search.");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to search papers. Please try again.");
+      console.error("Search error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black">

@@ -4,14 +4,18 @@ from pydantic import BaseModel
 import httpx
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any
-from urllib.parse import quote
+
+from realtime import Field
 
 app = FastAPI()
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://ai-research-explorer-zeta.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,7 +23,7 @@ app.add_middleware(
 
 
 class SearchRequest(BaseModel):
-    query: str
+    query: str = Field(..., min_length=1)
 
 
 def parse_arxiv_response(xml_content: str) -> Dict[str, Any]:
@@ -76,21 +80,19 @@ def parse_arxiv_response(xml_content: str) -> Dict[str, Any]:
 @app.post("/api/search-papers")
 async def search_papers(request: SearchRequest):
     """Search for papers using the arXiv API"""
-    if not request.query or not request.query.strip():
-        raise HTTPException(
-            status_code=400, detail="Query parameter is required and must not be empty"
-        )
-
     try:
-        # Build arXiv query URL
-        # Search across title, author, and abstract
-        search_query = f"all:{quote(request.query)}"
-        
-        url = f"https://export.arxiv.org/api/query?search_query={search_query}&start=0&max_results=20&sortBy=relevance&sortOrder=descending"
+        params = {
+            "search_query": f"all:{request.query}",
+            "start": 0,
+            "max_results": 20,
+            "sortBy": "relevance",
+            "sortOrder": "descending",
+        }
         
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                url, 
+                "https://export.arxiv.org/api/query",
+                params=params, 
                 timeout=10.0,
                 headers={"User-Agent": "AI-Research-Explorer/1.0"}
             )
