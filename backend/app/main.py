@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 import httpx
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any
+import asyncio
 
 try:
     from app.services.recommender import recommend_papers_for_user, generate_embedding, supabase as sb
@@ -90,6 +91,33 @@ def parse_arxiv_response(xml_content: str) -> Dict[str, Any]:
     return {"data": papers}
 
 
+async def _upsert_papers_with_embeddings(papers: list):
+    """Background task: generate embeddings and upsert papers."""
+    for p in papers:
+        pid = p.get("paperId") or p.get("title", "untitled").lower().replace(" ", "-")
+        if not pid:
+            continue
+        text = (p.get("title") or "") + " " + (p.get("abstract") or "")
+        embedding = [float(x) for x in generate_embedding(text)]
+        row = {
+            "id": pid,
+            "title": p.get("title") or "Untitled",
+            "abstract": p.get("abstract") or "",
+            "authors": ", ".join([a.get("name", "") for a in (p.get("authors") or []) if a.get("name")]),
+            "url": (
+                f"https://arxiv.org/abs/{p['externalIds']['ArXiv']}"
+                if p.get("externalIds", {}).get("ArXiv")
+                else f"https://arxiv.org/search/?query={pid}"
+            ),
+            "year": p.get("year"),
+            "embedding": embedding,
+        }
+        try:
+            sb.table("papers").upsert(row, on_conflict="id").execute()
+        except Exception:
+            pass
+
+
 @app.post("/api/search-papers")
 async def search_papers(request: SearchRequest):
     """Search for papers using the arXiv API"""
@@ -119,31 +147,10 @@ async def search_papers(request: SearchRequest):
         # Parse XML response
         data = parse_arxiv_response(response.text)
 
-        # Upsert all search results into papers table 
-        for p in data.get("data", []):
-            pid = p.get("paperId") or p.get("title", "untitled").lower().replace(" ", "-")
-            if not pid:
-                continue
-            text = (p.get("title") or "") + " " + (p.get("abstract") or "")
-            embedding = [float(x) for x in generate_embedding(text)]
-            row = {
-                "id": pid,
-                "title": p.get("title") or "Untitled",
-                "abstract": p.get("abstract") or "",
-                "authors": ", ".join([a.get("name", "") for a in (p.get("authors") or []) if a.get("name")]),
-                "url": (
-                    f"https://arxiv.org/abs/{p['externalIds']['ArXiv']}"
-                    if p.get("externalIds", {}).get("ArXiv")
-                    else f"https://arxiv.org/search/?query={pid}"
-                ),
-                "year": p.get("year"),
-                "embedding": embedding,  
-            }
-            try:
-                sb.table("papers").upsert(row, on_conflict="id").execute()
-            except Exception:
-                pass  # skip duplicates / errors silently
+        # Fire-and-forget: upsert papers with embeddings in background
+        asyncio.create_task(_upsert_papers_with_embeddings(data.get("data", [])))
 
+        # Return results immediately — no waiting for embeddings
         return data
 
     except httpx.TimeoutException:

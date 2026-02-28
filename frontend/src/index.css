@@ -5,22 +5,22 @@
   --font-heading:
     "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-primary: #6c63ff;
-  --color-primary-light: #8b83ff;
-  --color-primary-dark: #5046e5;
-  --color-accent: #a78bfa;
-  --color-accent-light: #c4b5fd;
-  --color-surface: #0f172a;
-  --color-surface-light: #1e293b;
-  --color-surface-lighter: #334155;
-  --color-border: #1e293b;
-  --color-border-light: #334155;
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
+  --color-primary: #c4835a;
+  --color-primary-light: #d9a67e;
+  --color-primary-dark: #a96d45;
+  --color-accent: #6ba3a0;
+  --color-accent-light: #8bbbb8;
+  --color-surface: #0f1117;
+  --color-surface-light: #171c25;
+  --color-surface-lighter: #1f2530;
+  --color-border: #282f3c;
+  --color-border-light: #333b4a;
+  --color-text-primary: #ece5da;
+  --color-text-secondary: #9b9389;
+  --color-text-muted: #605c55;
+  --color-success: #5ebd7d;
+  --color-danger: #e06c6c;
+  --color-warning: #e0b45c;
 }
 
 /* Base styles */
@@ -28,8 +28,8 @@ body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: #0f1117;
+  color: #ece5da;
 }
 
 /* Heading font */
@@ -44,14 +44,14 @@ h3 {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #0f1117;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #333b4a;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #c4835a;
 }
 
 /* Skeleton loading animation */
@@ -64,7 +64,7 @@ h3 {
   }
 }
 .skeleton {
-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background: linear-gradient(90deg, #171c25 25%, #1f2530 50%, #171c25 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 0.5rem;
@@ -72,14 +72,17 @@ h3 {
 
 /* Glass card effect */
 .glass-card {
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(23, 28, 37, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(196, 131, 90, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 /* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, #6c63ff, #a78bfa, #6c63ff);
+  background: linear-gradient(135deg, #c4835a 0%, #d9a67e 40%, #6ba3a0 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
