@@ -42,58 +42,19 @@ export default function Explore() {
     setSaving((prev) => ({ ...prev, [paperId]: true }));
 
     try {
-      // Check if paper already exists in the papers table
-      const { data: existingPaper } = await supabase
-        .from("papers")
-        .select("id")
-        .eq("id", paperId)
-        .single();
-
-      // If paper doesn't exist, insert it
-      if (!existingPaper) {
-        const paperData = {
-          id: paperId,
-          title: paper.title || "Untitled",
-          abstract: paper.abstract || "",
-          authors: paper.authors?.map((a) => a.name).join(", ") || "",
-          url: paper.externalIds?.ArXiv
-            ? `https://arxiv.org/abs/${paper.externalIds.ArXiv}`
-            : `https://arxiv.org/search/?query=${paperId}`, // fallback to arXiv search
-          year: paper.year || null,
-        };
-
-        const { error: paperError } = await supabase
-          .from("papers")
-          .insert([paperData]);
-
-        if (paperError && !paperError.message.includes("duplicate")) {
-          throw paperError;
-        }
-      }
-
-      // Check if already saved by this user
-      const { data: existingSave } = await supabase
-        .from("saved_papers")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("paper_id", paperId)
-        .single();
-
-      if (existingSave) {
-        setSaving((prev) => ({ ...prev, [paperId]: false }));
-        return; // Already saved
-      }
-
-      // Insert into saved_papers
-      const { error: saveError } = await supabase.from("saved_papers").insert([
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/save-paper`,
         {
-          user_id: user.id,
-          paper_id: paperId,
-          notes: "",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paper, user_id: user.id }),
         },
-      ]);
+      );
 
-      if (saveError) throw saveError;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to save paper");
+      }
 
       // Update local state
       setSavedPapers((prev) => new Set([...prev, paperId]));
@@ -102,32 +63,6 @@ export default function Explore() {
       setError(`Failed to save paper: ${err.message}`);
     } finally {
       setSaving((prev) => ({ ...prev, [paperId]: false }));
-    }
-  };
-
-  const savePapersToSupabase = async (papers) => {
-    for (const paper of papers) {
-      const paperId =
-        paper.paperId || paper.title.toLowerCase().replace(/\s+/g, "-");
-      // Check if paper already exists
-      const { data: existingPaper } = await supabase
-        .from("papers")
-        .select("id")
-        .eq("id", paperId)
-        .single();
-      if (!existingPaper) {
-        const paperData = {
-          id: paperId,
-          title: paper.title || "Untitled",
-          abstract: paper.abstract || "",
-          authors: paper.authors?.map((a) => a.name).join(", ") || "",
-          url: paper.externalIds?.ArXiv
-            ? `https://arxiv.org/abs/${paper.externalIds.ArXiv}`
-            : `https://arxiv.org/search/?query=${paperId}`,
-          year: paper.year || null,
-        };
-        await supabase.from("papers").insert([paperData]);
-      }
     }
   };
 
@@ -169,16 +104,12 @@ export default function Explore() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.detail || errorData.error || "Failed to search papers"
+          errorData.detail || errorData.error || "Failed to search papers",
         );
       }
 
       const data = await response.json();
       setResults(data.data || []);
-      // Save all results to Supabase papers table if not already present
-      if (data.data && data.data.length > 0) {
-        await savePapersToSupabase(data.data);
-      }
 
       if ((data.data || []).length === 0) {
         setError("No papers found. Try a different search.");
