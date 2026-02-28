@@ -28,24 +28,36 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-4 relative overflow-hidden">
+      <div className="absolute top-0 -left-40 w-96 h-96 bg-primary/15 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 -right-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-blue-500 mb-2">
+          <Link
+            to="/"
+            className="inline-block font-heading font-bold text-xl gradient-text mb-6"
+          >
+            AI Research Explorer
+          </Link>
+          <h1 className="text-4xl font-bold font-heading text-text-primary mb-2">
             Welcome Back
           </h1>
-          <p className="text-gray-400">Sign in to your account</p>
+          <p className="text-text-secondary">Sign in to your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="glass-card rounded-2xl p-8 space-y-5"
+        >
           {error && (
-            <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="p-4 bg-danger/10 border border-danger/30 rounded-xl">
+              <p className="text-danger text-sm">{error}</p>
             </div>
           )}
 
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">
+            <label className="block text-text-secondary text-sm font-medium mb-2">
               Email
             </label>
             <input
@@ -53,13 +65,13 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-surface-light border border-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
               placeholder="your@email.com"
             />
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">
+            <label className="block text-text-secondary text-sm font-medium mb-2">
               Password
             </label>
             <input
@@ -67,7 +79,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-surface-light border border-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
               placeholder="••••••••"
             />
           </div>
@@ -75,15 +87,18 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold rounded-lg transition"
+            className="w-full py-3 bg-primary hover:bg-primary-dark disabled:bg-surface-lighter disabled:text-text-muted text-white font-semibold rounded-xl transition shadow-lg shadow-primary/20"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
-        <p className="text-center text-gray-400 mt-6">
+        <p className="text-center text-text-secondary mt-6">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-500 hover:text-blue-400">
+          <Link
+            to="/signup"
+            className="text-primary-light hover:text-primary font-medium"
+          >
             Sign up
           </Link>
         </p>
