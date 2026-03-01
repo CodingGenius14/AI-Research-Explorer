@@ -1,0 +1,47 @@
+AI Usage:
+
+Tools: ChatGpt | Github Copilot - Claude Opus 4.6 - plan, ask, agent
+
+ChatGpt - Used to ensure that I was setting up supabase correctly regarding the tables and pgvector within the SQL editor
+
+Github Copilot - Plan: Used to plan the development process for the machine learning recommending system by deciding where to write the code, the model to use,
+and setting up the function templates in recommender.py
+
+Github Copilot - Ask: Constantly asking to check whether the code I implemented in recommender.py and main.py were correct and functioned the way I intended them to.
+And whether or not the code would work if I were to push it to production based on the free tier with render and vercel
+
+Github Copilot - Agent: Used extensively to revamp the code in the frontend to improve the UI of the web app, debugging, and used within recommender.py to 
+set up the ONNX runtime code
+
+    ___________________________________________________________________________________________________________________________________________________________
+
+Main Prompts:
+
+General:
+- I have a web app that allows users to search and save papers to a library through the arXiv api, my goal is to add a recommendation feature on the home page of the
+app that recommends research papers to a user based on the papers they have saved in their library, create a set of instructions that I need to follow to implement
+this feature. I'm using React for the frontend, FastAPI for the backend, and Supabase as my database
+- What are additional UI features I can add to my web app that would make it more useful and also more visually appealing
+
+FastAPI:
+- In @app.post("/api/search-papers") within main.py, I want all the search results based on the user's querry to be added to the 'papers' table within Supabase if 
+they aren't already apart of the table
+- Currently it is taking too much time for the searches to load because the embeddings are being calculated during the search, implement a way for the search results
+to display faster and still handle the embedding generation with main.py
+
+Supabase:
+- In my Supabase 'papers' table, I created a new column called embeddings (vector) which is going to store the embedding vector for each research paper in the table,
+help me setup the SQL Editor for cosine similarity with pgvector
+
+ML Recommender:
+- In recommender.py create a template where you only create the name of the functions and instructions for each function for I can implement the code myself
+- I am currently using Sentence-Transformer to run my model but it is using too much memory and that is going to intefere with the free tier of render when I deploy 
+the backend, what are other alternatives to Sentence-Transformer
+- Remove Sentence-Transformers from recommender.py and implement the changes needed to use ONNX runtime to save memory
+
+Frontend:
+- Currently the color scheme of the web app looks unprofessional, since the intended audience for this web app are college students, proffessors, and researchers 
+create a more approporiate color scheme utilziing darker colors for the background and lighter colors for text and effects that will make the web app have a 
+professional, modern looking, visually appealing design to it
+- Use framer motion to add smooth ui animations into the web app
+- remake landing page to display more information about the web app and include the core functionalities of the app (search papers, save papers, recommendations)
