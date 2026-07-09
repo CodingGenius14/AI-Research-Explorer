@@ -2,8 +2,6 @@
 
 A full-stack web application that helps researchers and students discover, save, and receive personalized academic paper recommendations
 
-**Live Demo:** [https://ai-research-explorer-zeta.vercel.app](https://ai-research-explorer-zeta.vercel.app)
-
 ---
 
 ## Table of Contents
