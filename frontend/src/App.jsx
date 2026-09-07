@@ -2,13 +2,15 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { Toaster } from "react-hot-toast";
-import Landing from "./pages/Landing";
-import Home from "./pages/Home";
-import Library from "./pages/Library";
-import Explore from "./pages/Explore";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import { lazy, Suspense } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+const Landing = lazy(() => import("./pages/Landing"));
+const Home = lazy(() => import("./pages/Home"));
+const Library = lazy(() => import("./pages/Library"));
+const Explore = lazy(() => import("./pages/Explore"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
 
 function PageTransition({ children }) {
   return (
@@ -59,6 +61,11 @@ export default function App() {
           },
         }}
       />
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           {/* Public Routes */}
@@ -123,6 +130,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AnimatePresence>
+      </Suspense>
     </>
   );
 }
