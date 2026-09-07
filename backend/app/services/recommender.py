@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import json
 import os
+import threading
 import requests as req
 
 _env_path = Path(__file__).resolve().parent.parent.parent / ".env"
@@ -14,7 +15,6 @@ load_dotenv(_env_path)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-# --- Lightweight ONNX model setup (replaces torch + sentence-transformers) ---
 MODEL_DIR = Path(__file__).resolve().parent / "model"
 MODEL_DIR.mkdir(exist_ok=True)
 
@@ -24,20 +24,33 @@ _FILES = {
     "tokenizer.json": f"{_HF_BASE}/tokenizer.json",
 }
 
-for fname, url in _FILES.items():
-    path = MODEL_DIR / fname
-    if not path.exists():
-        print(f"Downloading {fname}...")
-        r = req.get(url)
-        r.raise_for_status()
-        path.write_bytes(r.content)
-
-tokenizer = Tokenizer.from_file(str(MODEL_DIR / "tokenizer.json"))
-tokenizer.enable_padding(pad_id=0, pad_token="[PAD]", length=128)
-tokenizer.enable_truncation(max_length=128)
-session = ort.InferenceSession(str(MODEL_DIR / "model.onnx"))
+# Lazy-loaded — avoids blocking server startup with a ~23 MB download
+_tokenizer = None
+_ort_session = None
+_model_lock = threading.Lock()
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
+def _ensure_model_loaded():
+    global _tokenizer, _ort_session
+    if _tokenizer is not None:
+        return
+    with _model_lock:
+        if _tokenizer is not None:
+            return
+        for fname, url in _FILES.items():
+            path = MODEL_DIR / fname
+            if not path.exists():
+                print(f"Downloading {fname}...")
+                r = req.get(url, timeout=120)
+                r.raise_for_status()
+                path.write_bytes(r.content)
+        tok = Tokenizer.from_file(str(MODEL_DIR / "tokenizer.json"))
+        tok.enable_padding(pad_id=0, pad_token="[PAD]", length=128)
+        tok.enable_truncation(max_length=128)
+        _tokenizer = tok
+        _ort_session = ort.InferenceSession(str(MODEL_DIR / "model.onnx"))
 
 
 def generate_embedding(text: str):
@@ -46,12 +59,13 @@ def generate_embedding(text: str):
     Returns embedding vector as Python list (384-dim, normalized).
     Uses ONNX Runtime instead of torch for minimal memory footprint.
     """
-    encoded = tokenizer.encode(text)
+    _ensure_model_loaded()
+    encoded = _tokenizer.encode(text)
     input_ids = np.array([encoded.ids], dtype=np.int64)
     attention_mask = np.array([encoded.attention_mask], dtype=np.int64)
     token_type_ids = np.zeros_like(input_ids)
 
-    outputs = session.run(None, {
+    outputs = _ort_session.run(None, {
         "input_ids": input_ids,
         "attention_mask": attention_mask,
         "token_type_ids": token_type_ids,

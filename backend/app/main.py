@@ -134,7 +134,7 @@ async def search_papers(request: SearchRequest):
             response = await client.get(
                 "https://export.arxiv.org/api/query",
                 params=params, 
-                timeout=10.0,
+                timeout=25.0,
                 headers={"User-Agent": "AI-Research-Explorer/1.0"}
             )
         

@@ -40,6 +40,7 @@ export default function Explore() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState({});
   const [savedPapers, setSavedPapers] = useState(new Set());
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -106,11 +107,16 @@ export default function Explore() {
     paper.paperId || paper.title.toLowerCase().replace(/\s+/g, "-");
 
   const searchPapers = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
     setLoading(true);
     setError("");
+    setIsWakingUp(false);
     setResults([]);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 40000);
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/search-papers`,
@@ -118,8 +124,10 @@ export default function Explore() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: searchQuery }),
+          signal: controller.signal,
         },
       );
+      clearTimeout(timeoutId);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
@@ -131,7 +139,15 @@ export default function Explore() {
       if ((data.data || []).length === 0)
         setError("No papers found. Try a different search.");
     } catch (err) {
-      setError(err.message || "Failed to search papers. Please try again.");
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setIsWakingUp(true);
+        setError(
+          "The server is waking up from sleep. Please wait a moment and try again.",
+        );
+      } else {
+        setError(err.message || "Failed to search papers. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -197,8 +213,16 @@ export default function Explore() {
 
         {/* Error */}
         {error && (
-          <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-xl">
+          <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-xl flex items-center justify-between gap-4">
             <p className="text-danger text-sm">{error}</p>
+            {isWakingUp && (
+              <button
+                onClick={searchPapers}
+                className="shrink-0 px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg transition"
+              >
+                Retry
+              </button>
+            )}
           </div>
         )}
 
